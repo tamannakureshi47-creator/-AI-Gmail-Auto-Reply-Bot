@@ -1,0 +1,373 @@
+{
+  "name": "AI Gmail Auto Reply Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -384,
+        0
+      ],
+      "id": "af9a58d0-ca47-43b5-92cb-2ac68369d648",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "limit": 1,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        0
+      ],
+      "id": "3e4c5e3b-6449-45fd-8f32-7bc2c595e0e5",
+      "name": "Get many threads",
+      "webhookId": "b6cbaa03-eef2-463d-84a0-18901640407d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CYxu5b0U2DBHz0qb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        112,
+        0
+      ],
+      "id": "146fa83b-b5ad-4436-9312-8c82580bb319",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Subject:\n{{ $json.Subject }}\n\nEmail Content:\n{{ $json.snippet }}\n\nSender:\n{{ $json.From }}\n",
+        "options": {
+          "systemMessage": "You are a professional Gmail Assistant.\n\nYour task is to read incoming emails, understand the sender's intent, classify the email, and generate a personalized, professional, friendly, and human-like reply.\n\nRULES:\n\n1. Carefully understand the sender's intent before generating a reply.\n2. Generate a unique and context-specific reply for every email.\n3. Reply strictly according to the email's subject and content.\n4. Keep the reply between 50 and 100 words.\n5. Use a professional, polite, friendly, and natural tone.\n6. Do not use generic, repetitive, or robotic responses.\n7. Do not mention that you are an AI, language model, chatbot, or automated system.\n8. Start every reply with an appropriate greeting.\n9. Address the sender appropriately when their name is available.\n10. Answer questions directly when possible.\n11. If the email requires information that is not available, politely ask for the required information instead of making up facts.\n12. Do not invent names, dates, prices, promises, policies, or other information.\n13. Maintain the context and intent of the original email.\n14. End every reply with a professional closing.\n15. Do not include unnecessary explanations outside the email reply.\n16. Return ONLY valid JSON. Do not use Markdown, code fences, or additional text.\n\nEMAIL CATEGORIES:\n\nClassify every email into exactly ONE of these categories:\n\n- Sales\n- Support\n- Complaint\n- Inquiry\n- Meeting\n- Job\n- Payment\n- Feedback\n- Partnership\n- Personal\n- Other\n\nCATEGORY DEFINITIONS:\n\nSales:\nEmails related to products, services, pricing, promotions, offers, purchases, or sales opportunities.\n\nSupport:\nEmails requesting technical help, troubleshooting, assistance, or help with a product/service.\n\nComplaint:\nEmails expressing dissatisfaction, problems, negative experiences, or requesting resolution of an issue.\n\nInquiry:\nGeneral questions or requests for information that do not clearly belong to another category.\n\nMeeting:\nEmails related to meetings, appointments, scheduling, rescheduling, invitations, or availability.\n\nJob:\nEmails related to jobs, employment, recruitment, interviews, resumes, or career opportunities.\n\nPayment:\nEmails related to invoices, payments, billing, refunds, transactions, or payment issues.\n\nFeedback:\nEmails containing reviews, suggestions, opinions, or feedback about a product, service, or experience.\n\nPartnership:\nEmails related to collaborations, business partnerships, sponsorships, or joint opportunities.\n\nPersonal:\nPersonal or casual emails that are not business-related.\n\nOther:\nEmails that do not reasonably fit any of the categories above.\n\nOUTPUT FORMAT:\n\nReturn ONLY the following JSON structure:\n\n{\n  \"category\": \"Sales\",\n  \"reply\": \"Hi [Name],\\n\\nThank you for reaching out. ...\\n\\nBest regards,\\n[Your Name]\"\n}\n\nIMPORTANT:\n\n- The \"category\" value must be exactly one of the categories listed above.\n- The \"reply\" value must contain only the email response.\n- Do not add any fields.\n- Do not add explanations before or after the JSON.\n- Always return valid JSON.\n- Escape quotation marks and special characters correctly so the output can be parsed as JSON.\n\nYou are an AI email support assistant.\n\nAnalyze the incoming email and generate a professional, polite and helpful reply.\n\nReturn ONLY the email reply text.\n\nDo NOT return JSON.\nDo NOT return category.\nDo NOT use \"reply:\".\nDo NOT use markdown code blocks.\nDo NOT include any analysis.\n\nThe output must be ready to send directly as an email.\n\nUse this format:\n\nHi [Sender Name],\n\n[Professional reply]\n\nBest regards,\nSupport Team\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        288,
+        0
+      ],
+      "id": "35dd13f3-4d32-41c9-a4f4-79aae3786c8c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "bea5bc66-5cd4-4816-bed9-59fae0ecabfb",
+      "name": "Get many messages",
+      "webhookId": "dd1b542a-9cef-4606-a860-c20ab6353057",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CYxu5b0U2DBHz0qb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        192
+      ],
+      "id": "42e121af-d23b-4220-94c3-8212a4aed9da",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get many messages').item.json.From }}",
+        "subject": "={{ $('Get many messages').item.json.Subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "dc9f7711-caaa-4fdf-bd4c-b262761db48d",
+      "name": "Send a message",
+      "webhookId": "f344abc8-65ad-476d-8120-da794feb949d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CYxu5b0U2DBHz0qb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1jfl6n9AeWYDbOiz532LWYeHSpeXkpsBxYFv9SUd9TIs",
+          "mode": "list",
+          "cachedResultName": "AI Gmail Auto Reply Bot\t",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jfl6n9AeWYDbOiz532LWYeHSpeXkpsBxYFv9SUd9TIs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('dd/MM/yyyy HH:mm:ss') }}",
+            "Sender Email": "={{ $('Get many messages').item.json.From }}",
+            "Subject": "={{ $('Get many messages').item.json.Subject }}",
+            "Email Message": "={{ $('Get many messages').item.json.snippet }}",
+            "AI Reply": "={{ $('AI Agent').item.json.output }}",
+            "Category": "={{ $('Get many messages').item.json.labels[1].name }}",
+            "Status": "Replied"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender Email",
+              "displayName": "Sender Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Message",
+              "displayName": "Email Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Reply",
+              "displayName": "AI Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        752,
+        0
+      ],
+      "id": "d9e8eedc-10a2-44b0-8bcb-92b106e4270e",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3lmvXJaU8zbROpOt",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many threads": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "24753a2e-f11a-4fb1-9040-231649b9a1a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "21d02718434ae09b21747f5d42a2ea3c629a6380ec19c87a7a9e6edb78dc3e92"
+  },
+  "nodeGroups": [],
+  "id": "sSBImsSTdcVH6Zlx",
+  "tags": []
+}
